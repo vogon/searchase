@@ -4,15 +4,26 @@ require './snpget'
 require './parse-23andme-snp-dump'
 require './alfred'
 
-def allele_set_from_seq(alleles)
-	allele_set = Set.new
+def base_set_from_seq(bases)
+	base_set = Set.new
 
-	allele_set << :A if alleles =~ /A/
-	allele_set << :C if alleles =~ /C/
-	allele_set << :G if alleles =~ /G/
-	allele_set << :T if alleles =~ /T/
+	base_set << :A if bases =~ /A/
+	base_set << :C if bases =~ /C/
+	base_set << :G if bases =~ /G/
+	base_set << :T if bases =~ /T/
 
-	allele_set
+	base_set
+end
+
+def seq_from_base_set(bases)
+	s = ""
+
+	bases.each do |base|
+		s << "/" if !s.empty?
+		s << base.to_s
+	end
+
+	s
 end
 
 def complement(base)
@@ -21,6 +32,7 @@ def complement(base)
 	when :C then :G
 	when :G then :C
 	when :T then :A
+	else fail "unexpected base"
 	end
 end
 
@@ -65,9 +77,9 @@ end
 # fetch information from entrez
 called_snps.each do |id, snp|
 	if alfred_ids[id] then
-		id_string = "#{id} (#{alfred_ids[id]}): "
+		id_string = "#{id} (#{alfred_ids[id]})"
 	else
-		id_string = "#{id}: "
+		id_string = "#{id}"
 	end
 
 	# get SNP data from entrez.
@@ -81,8 +93,23 @@ called_snps.each do |id, snp|
 		next
 	elsif freqs.length == 1 then
 		# frequency data.
-		allele_string = entrez_snp.css('Rs > Sequence > Observed')[0].content
-		alleles = allele_set_from_seq(allele_string)
+		refseq_allele_string = entrez_snp.css('Rs > Sequence > Observed')[0].content
+		refseq_alleles = base_set_from_seq(refseq_allele_string)
+
+		# sometimes the alleles specified in the reference sequence are on the noncoding strand;
+		# check the orientation of the maploc, and complement the allele set if it's reverse-oriented.
+		maplocs = entrez_snp.css("Assembly[reference='true'] MapLoc")
+		fail "unexpected maploc count (#{maplocs.count} in #{id})" if maplocs.count != 1
+
+		if (maplocs[0]['orient'] == 'forward') then
+			alleles = refseq_alleles
+		else
+			fail "unexpected orientation" if maplocs[0]['orient'] != 'reverse'
+			
+			alleles = Set.new
+			refseq_alleles.each { |base| alleles << complement(base) }
+		end
+
 		minor_freq = freqs[0]['freq'].to_f
 		minor_allele = freqs[0]['allele'].to_sym
 
@@ -98,20 +125,12 @@ called_snps.each do |id, snp|
 				end
 			end
 
-			call_string = "(#{snp.call}; p=#{p})"
+			call_string = "(#{snp.call}; p=#{p.round(4)})"
 		else
 			call_string = "(#{snp.call})"
 		end
 
-		# it appears that dbSNP incorrectly reports the minor allele in some cases as its
-		# complement.  if it doesn't match any of the reported alleles, flip it and alert the
-		# user.
-		if alleles.member?(minor_allele) then
-			puts "#{id_string} #{allele_string}; #{minor_allele}=#{minor_freq} #{call_string}" if (!p.nil? && p <= p_cutoff)
-		else
-			real_minor_allele = complement(minor_allele)
-			puts "#{id_string} #{allele_string}; #{minor_allele}(#{real_minor_allele})=#{minor_freq} #{call_string}" if (!p.nil? && p <= p_cutoff)
-		end
+		puts "#{id_string}: #{seq_from_base_set(alleles)}; #{minor_allele}=#{minor_freq} #{call_string}" if (!p.nil? && p <= p_cutoff)
 	else
 		fail "weird number of frequencies"
 	end
