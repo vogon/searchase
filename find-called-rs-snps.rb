@@ -1,26 +1,7 @@
-f = open(ARGV[0])
+require './parse-23andme-snp-dump'
 
-line_number = 0
+snps = parse_23andme_snp_dump(ARGV[0])
 
-f.each_line do |line|
-	line_number += 1
-
-	if line =~ /#/ then
-		# puts "ignored comment"
-		next
-	end
-
-	fields = line.split("\t")
-
-	if !(fields[0] =~ /^rs/) then
-		# puts "ignored non-rs SNP"
-		next
-	end
-
-	if !(fields[3] =~ /^[ATCG]/) then
-		# puts "ignored SNP with unexpected call #{fields[3]}"
-		next
-	end
-
-	puts "#{line_number}: #{fields[0]} = #{fields[3]}"
+snps.select { |id, snp| snp.id =~ /^rs/ && snp.call =~ /^[ATCG]$/ }.each do |id, snp|
+	print "#{snp.id} = #{snp.call}"
 end

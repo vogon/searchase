@@ -1,3 +1,6 @@
+# local cache of dbSNP records
+dbsnp_cache/*
+
 #################
 ## Eclipse
 #################

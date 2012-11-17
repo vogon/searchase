@@ -18,7 +18,7 @@ def fetch_snp_from_cache(rsid)
 	filename = make_cache_filename(rsid)
 
 	if File::exists?(filename) then
-		puts "fetching rs#{rsid} from cache..."
+		# puts "fetching rs#{rsid} from cache..."
 
 		open(filename)
 	else
@@ -27,7 +27,7 @@ def fetch_snp_from_cache(rsid)
 end
 
 def fetch_snp_from_entrez(rsid)
-	puts "fetching rs#{rsid} from entrez..."
+	# puts "fetching rs#{rsid} from entrez..."
 
 	ncbi = Bio::NCBI::REST.new
 
@@ -35,8 +35,11 @@ def fetch_snp_from_entrez(rsid)
 	StringIO.new(result)
 end
 
-if __FILE__ == $0 then
-	rsid = ARGV[0]
+def get_snp(rsid)
+	# remove leading "rs", if any
+	if rsid =~ /^rs([0-9]+)/ then
+		rsid = $1
+	end
 
 	snp_io = fetch_snp_from_cache(rsid)
 
@@ -49,4 +52,12 @@ if __FILE__ == $0 then
 	end
 
 	store_snp_to_cache(rsid, snp_xml)
+
+	snp_xml
+end
+
+if __FILE__ == $0 then
+	rsid = ARGV[0]
+
+	get_snp(rsid)
 end
