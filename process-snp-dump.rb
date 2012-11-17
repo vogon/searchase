@@ -96,18 +96,19 @@ called_snps.each do |id, snp|
 		refseq_allele_string = entrez_snp.css('Rs > Sequence > Observed')[0].content
 		refseq_alleles = base_set_from_seq(refseq_allele_string)
 
-		# sometimes the alleles specified in the reference sequence are on the noncoding strand;
-		# check the orientation of the maploc, and complement the allele set if it's reverse-oriented.
-		maplocs = entrez_snp.css("Assembly[reference='true'] MapLoc")
-		fail "unexpected maploc count (#{maplocs.count} in #{id})" if maplocs.count != 1
+		called_alleles = allele_list_from_call(snp.call)
 
-		if (maplocs[0]['orient'] == 'forward') then
-			alleles = refseq_alleles
-		else
-			fail "unexpected orientation" if maplocs[0]['orient'] != 'reverse'
-			
+		# sometimes the alleles specified in the reference sequence are on the noncoding strand;
+		# if the called alleles aren't part of the refseq allele set, assume this is the case
+		# and complement it [the correct solution probably involves maploc orientations and a
+		# bunch of other crap I don't want to mess around with]
+		if called_alleles.any? { |base| !(refseq_alleles.member? base) } then
 			alleles = Set.new
 			refseq_alleles.each { |base| alleles << complement(base) }
+
+			fail "uh something weird is going on here (#{id})" if called_alleles.any? { |base| !(alleles.member? base) }
+		else
+			alleles = refseq_alleles
 		end
 
 		minor_freq = freqs[0]['freq'].to_f
@@ -117,7 +118,7 @@ called_snps.each do |id, snp|
 			# 2 known alleles; can compute probability directly.
 			p = 1
 
-			allele_list_from_call(snp.call).each do |allele|
+			called_alleles.each do |allele|
 				if minor_allele == allele then
 					p *= minor_freq
 				else
