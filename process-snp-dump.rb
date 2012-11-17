@@ -40,6 +40,16 @@ def allele_list_from_call(call)
 	call.chars.map { |ch| ch.to_sym }
 end
 
+# yes this is a slow implementation, no I don't care
+def factorial(n)
+	return 1 if n <= 1
+	n * factorial(n - 1)
+end
+
+def choose(n, k)
+	factorial(n) / (factorial(k) * factorial(n - k))
+end
+
 ARGV.length >= 1 or fail "please pass a filename to process!"
 
 # # load alfred ID database
@@ -115,23 +125,26 @@ called_snps.each do |id, snp|
 		minor_allele = freqs[0]['allele'].to_sym
 
 		if (alleles.count == 2) then
-			# 2 known alleles; can compute probability directly.
-			p = 1
+			# 2 known alleles; can compute probability from minor allele frequency.
 
-			called_alleles.each do |allele|
-				if minor_allele == allele then
-					p *= minor_freq
-				else
-					p *= (1 - minor_freq)
-				end
-			end
+			# number of chromosomes at the SNP location.
+			ploidy = called_alleles.length
+
+			# number of copies of the minor allele at the SNP location.
+			minor_count = called_alleles.count { |base| base == minor_allele }
+
+			# the probability of a given zygosity for this trait is:
+			#   (the probability of having minor_count copies of the minor allele) *
+			#   (the probability of having (ploidy - minor_count) copies of the major allele) *
+			#   (the number of combinations (ploidy)C(minor_count), as being CT is the same as TC)
+			p = (minor_freq ** minor_count) * ((1 - minor_freq) ** (ploidy - minor_count)) * choose(ploidy, minor_count)
 
 			call_string = "(#{snp.call}; p=#{p.round(4)})"
 		else
 			call_string = "(#{snp.call})"
 		end
 
-		puts "#{id_string}: #{seq_from_base_set(alleles)}; #{minor_allele}=#{minor_freq} #{call_string}" if (!p.nil? && p <= p_cutoff)
+		puts "#{id_string}: #{seq_from_base_set(alleles)}; #{minor_allele}=#{minor_freq} #{call_string}" if (p.nil? || p <= p_cutoff)
 	else
 		fail "weird number of frequencies"
 	end
