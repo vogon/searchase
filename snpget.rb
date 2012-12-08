@@ -31,7 +31,16 @@ def fetch_snp_from_entrez(rsid)
 
 	ncbi = Bio::NCBI::REST.new
 
-	result = ncbi.efetch(rsid, {"db"=>"snp", "retmode"=>"xml"})
+	begin
+		result = ncbi.efetch(rsid, {"db"=>"snp", "retmode"=>"xml"})
+	rescue EOFError
+		retry
+	rescue Errno::ECONNRESET
+		retry
+	rescue Errno::ETIMEDOUT
+		retry
+	end
+
 	StringIO.new(result)
 end
 

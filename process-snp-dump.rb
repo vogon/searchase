@@ -84,13 +84,28 @@ else
 	p_cutoff = 1
 end
 
+merged_data = {}
+
+n = called_snps.length
+n_complete = 0
+n_known_freq = 0
+n_known_prob = 0
+n_10pct = 0
+n_5pct = 0
+n_1pct = 0
+
+print "\n"
+
 # fetch information from entrez
 called_snps.each do |id, snp|
-	if alfred_ids[id] then
-		id_string = "#{id} (#{alfred_ids[id]})"
-	else
-		id_string = "#{id}"
-	end
+	print "\r#{n_complete}/#{n} (freq? #{n_known_freq}, p? #{n_known_prob}, <10% #{n_10pct}, <5% #{n_5pct}, <1% #{n_1pct})"
+	STDOUT.flush
+
+	# if alfred_ids[id] then
+	# 	id_string = "#{id} (#{alfred_ids[id]})"
+	# else
+	# 	id_string = "#{id}"
+	# end
 
 	# get SNP data from entrez.
 	entrez_snp = get_snp(snp.id)
@@ -98,11 +113,15 @@ called_snps.each do |id, snp|
 	# get frequency elements from SNP data.
 	freqs = entrez_snp.css('Rs > Frequency')
 
+	n_complete += 1
+
 	if freqs.length == 0 then
 		# no frequency data; skip.
 		next
 	elsif freqs.length == 1 then
 		# frequency data.
+		n_known_freq += 1
+
 		refseq_allele_string = entrez_snp.css('Rs > Sequence > Observed')[0].content
 		refseq_alleles = base_set_from_seq(refseq_allele_string)
 
@@ -126,6 +145,7 @@ called_snps.each do |id, snp|
 
 		if (alleles.count == 2) then
 			# 2 known alleles; can compute probability from minor allele frequency.
+			n_known_prob += 1
 
 			# number of chromosomes at the SNP location.
 			ploidy = called_alleles.length
@@ -139,13 +159,35 @@ called_snps.each do |id, snp|
 			#   (the number of combinations (ploidy)C(minor_count), as being CT is the same as TC)
 			p = (minor_freq ** minor_count) * ((1 - minor_freq) ** (ploidy - minor_count)) * choose(ploidy, minor_count)
 
-			call_string = "(#{snp.call}; p=#{p.round(4)})"
+			n_10pct += 1 if p <= 0.10
+			n_5pct += 1  if p <= 0.05
+			n_1pct += 1  if p <= 0.01
+
+			merged_data[snp.id] = { :id => snp.id, :call => snp.call, :p => p }
+
+			#call_string = "(#{snp.call}; p=#{p.round(4)})"
 		else
-			call_string = "(#{snp.call})"
+			merged_data[snp.id] = { :id => snp.id, :call => snp.call }
+
+			#call_string = "(#{snp.call})"
 		end
 
-		puts "#{id_string}: #{seq_from_base_set(alleles)}; #{minor_allele}=#{minor_freq} #{call_string}" if (p.nil? || p <= p_cutoff)
+		# puts "#{id_string}: #{seq_from_base_set(alleles)}; #{minor_allele}=#{minor_freq} #{call_string}" if (p.nil? || p <= p_cutoff)
 	else
 		fail "weird number of frequencies"
 	end
+end
+
+print "\n"
+
+if chromosome then
+	merged_filename = "#{File.basename(ARGV[0], '.txt')} chr#{chromosome} #{DateTime.now.strftime('%Y%m%d %H%M%S')}.yaml"
+else
+	merged_filename = "#{File.basename(ARGV[0], '.txt')} #{DateTime.now.strftime('%Y%m%d %H%M%S')}.yaml"
+end
+
+require 'yaml'
+
+File.open(merged_filename, 'w') do |f|
+	YAML.dump(merged_data, f)
 end
