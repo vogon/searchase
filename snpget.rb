@@ -4,21 +4,23 @@ require 'stringio'
 
 Bio::NCBI.default_email = "vogon@icculus.org"
 
+cache_dir = "."
+
 def make_cache_filename(rsid)
-	"dbsnp_cache/#{rsid}.xml"
+	"#{cache_dir}/dbsnp_cache/#{rsid}.xml"
 end
 
 def store_snp_to_cache(rsid, xml)
-	io = open(make_cache_filename(rsid), "w")
-	io << xml.to_xml(:indent => 4)
-	io.close
+	open(make_cache_filename(rsid), "w") do |io|
+		io << xml.to_xml(:indent => 4)
+	end
 end
 
 def fetch_snp_from_cache(rsid)
 	filename = make_cache_filename(rsid)
 
 	if File::exists?(filename) then
-		# puts "fetching rs#{rsid} from cache..."
+		puts "fetching rs#{rsid} from cache..."
 
 		open(filename)
 	else
@@ -27,7 +29,7 @@ def fetch_snp_from_cache(rsid)
 end
 
 def fetch_snp_from_entrez(rsid)
-	# puts "fetching rs#{rsid} from entrez..."
+	puts "fetching rs#{rsid} from entrez..."
 
 	ncbi = Bio::NCBI::REST.new
 
