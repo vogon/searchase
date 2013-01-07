@@ -1,7 +1,8 @@
 require 'set'
 
 require './snpget'
-require './parse-23andme-snp-dump'
+require './snpcall'
+require './snpcall-23andme'
 require './alfred'
 
 def base_set_from_seq(bases)
@@ -60,7 +61,7 @@ ARGV.length >= 1 or fail "please pass a filename to process!"
 alfred_ids = {}
 
 # read 23andme SNP dump to grab a list of SNPs.
-all_snps = parse_23andme_snp_dump(ARGV[0])
+all_snps = SNPCall.load_23andme_dump(ARGV[0])
 
 puts "loaded list of #{all_snps.length} SNPs..."
 

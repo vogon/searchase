@@ -1,7 +1,28 @@
 doctype html
 html
-	h1
-		| Hello Slim world!
-	- (1..10).each do |n|
-		h2 This is line #{n}
-	end
+	h1 test report
+
+	table
+		caption summary statistics
+		tr
+			th scope="row" total SNPs:
+			td = summary[:total_count]
+		tr
+			th scope="row" ... with rsids:
+			td = summary[:rsid_count]
+		tr
+			th scope="row" ... with calls:
+			td = summary[:called_count]
+
+	table
+		thead
+			th id
+			th genotype
+			th observed seq.
+			th clinical signif.
+		- snps.values.each do |snp|
+			tr
+				td.id = snp.id
+				td.genotype = snp.call
+				td.observed &mdash;
+				td.significance &mdash;

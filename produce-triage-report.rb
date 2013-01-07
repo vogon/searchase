@@ -1,6 +1,9 @@
 require 'tilt'
 require 'slim'
 
+require './snpcall'
+require './snpcall-23andme'
+
 class Group
 	def initialize(name = nil, predicate = nil)
 		self.name = name
@@ -43,6 +46,29 @@ GROUPS = GroupChain.new do |c|
 	end
 end
 
+class String
+	def rsid?
+		self =~ /^rs/
+	end
+
+	def called?
+		!(self =~ /-/)
+	end
+end
+
+ARGV.length >= 1 or fail "specify a SNP dump file"
+
+summary = {}
+
+snps = SNPCall.load_23andme_dump(ARGV[0])
+summary[:total_count] = snps.count
+
+rs_snps = snps.select { |id, snp| snp.id.rsid? }
+summary[:rsid_count] = rs_snps.count
+
+called_snps = rs_snps.select { |id, snp| snp.call.called? }
+summary[:called_count] = called_snps.count
+
 f = File.open('report.html', 'w') do |f|
-	f.write (Slim::Template.new('report.slim').render)
+	f.write (Slim::Template.new('report.slim').render(nil, :snps => called_snps, :summary => summary))
 end
