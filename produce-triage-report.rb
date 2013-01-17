@@ -3,6 +3,8 @@ require 'slim'
 
 require './snpcall'
 require './snpcall-23andme'
+require './snp'
+require './snp-dbsnp'
 
 class Group
 	def initialize(name = nil, predicate = nil)
@@ -56,19 +58,40 @@ class String
 	end
 end
 
+require './config'
+
 ARGV.length >= 1 or fail "specify a SNP dump file"
 
 summary = {}
 
-snps = SNPCall.load_23andme_dump(ARGV[0])
-summary[:total_count] = snps.count
+snp_calls = SNPCall.load_23andme_dump(ARGV[0])
+summary[:total_count] = snp_calls.count
 
-rs_snps = snps.select { |id, snp| snp.id.rsid? }
-summary[:rsid_count] = rs_snps.count
+scope_snp_calls = snp_calls.select { |id, snp| CONFIG[:in_scope?].(snp) }
+summary[:scope_count] = scope_snp_calls.count
 
-called_snps = rs_snps.select { |id, snp| snp.call.called? }
-summary[:called_count] = called_snps.count
+scope_snps = {}
+
+i = 0
+
+scope_snp_calls.keys.each do |rsid|
+	print "#{i}..." if i % 100 == 0
+
+	scope_snps[rsid] = SNP.load_dbSNP(rsid)
+
+	i = i + 1
+end
+
+puts
+
+DbSNP.flush
 
 f = File.open('report.html', 'w') do |f|
-	f.write (Slim::Template.new('report.slim').render(nil, :snps => called_snps, :summary => summary))
+	html = Slim::Template.new('report.slim').
+		render(nil, 
+			   :snp_calls => scope_snp_calls,
+			   :snps => scope_snps,
+			   :summary => summary)
+
+	f.write html
 end

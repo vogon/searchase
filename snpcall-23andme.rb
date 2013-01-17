@@ -4,7 +4,7 @@ class SNPCall
 	attr_accessor :chr
 	attr_accessor :position
 
-	def SNPCall.load_23andme_dump(filename)
+	def self.load_23andme_dump(filename)
 		io = open(filename)
 		snps = {}
 
@@ -13,7 +13,7 @@ class SNPCall
 		io.each_line do |line|
 			line_number += 1
 
-			if line =~ /#/ then
+			if line =~ /^#/ then
 				# puts "ignored comment"
 				next
 			end

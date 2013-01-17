@@ -8,11 +8,8 @@ html
 			th scope="row" total SNPs:
 			td = summary[:total_count]
 		tr
-			th scope="row" ... with rsids:
-			td = summary[:rsid_count]
-		tr
-			th scope="row" ... with calls:
-			td = summary[:called_count]
+			th scope="row" ... in scope:
+			td = summary[:scope_count]
 
 	table
 		thead
@@ -20,9 +17,11 @@ html
 			th genotype
 			th observed seq.
 			th clinical signif.
-		- snps.values.each do |snp|
+			th genes
+		- snp_calls.each do |rsid, snpcall|
 			tr
-				td.id = snp.id
-				td.genotype = snp.call
+				td.id = rsid
+				td.genotype = snpcall.call
 				td.observed &mdash;
-				td.significance &mdash;
+				td.significance = snps[rsid].clinical_significance
+				td.genes = snps[rsid].genes.join(", ")
