@@ -11,17 +11,22 @@ html
 			th scope="row" ... in scope:
 			td = summary[:scope_count]
 
-	table
-		thead
-			th id
-			th genotype
-			th observed seq.
-			th clinical signif.
-			th genes
-		- snp_calls.each do |rsid, snpcall|
-			tr
-				td.id = rsid
-				td.genotype = snpcall.call
-				td.observed &mdash;
-				td.significance = snps[rsid].clinical_significance
-				td.genes = snps[rsid].genes.join(", ")
+	- groups.each do |group|
+		h1 = group.name
+
+		table
+			thead
+				th id
+				th genotype
+				th observed seq.
+				th clinical signif.
+				th genes
+	
+			- group.snps.each do |snp|
+				tr
+					td.id 
+						a href="#{make_dbsnp_link(snp.rsid)}" = snp.rsid
+					td.genotype = snp_calls[snp.rsid].call
+					td.observed &mdash;
+					td.significance = snps[snp.rsid].clinical_significance
+					td.genes = snps[snp.rsid].genes.join(", ")

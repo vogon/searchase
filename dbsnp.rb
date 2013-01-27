@@ -1,7 +1,6 @@
 require 'bio'
 require 'nokogiri'
 require 'stringio'
-require 'zip/zipfilesystem'
 
 require './config'
 

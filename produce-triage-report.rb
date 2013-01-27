@@ -10,6 +10,7 @@ class Group
 	def initialize(name = nil, predicate = nil)
 		self.name = name
 		self.predicate = predicate
+		self.snps = []
 
 		if block_given? then
 			yield self
@@ -18,7 +19,7 @@ class Group
 		fail if (self.name.nil? || self.predicate.nil?)
 	end
 
-	attr_accessor :name, :predicate
+	attr_accessor :name, :predicate, :snps
 end
 
 class GroupChain
@@ -26,6 +27,10 @@ class GroupChain
 		@chain = []
 
 		yield self
+	end
+
+	def each(&block)
+		@chain.each &block
 	end
 
 	def group(&new_block)
@@ -40,8 +45,20 @@ class GroupChain
 end
 
 GROUPS = GroupChain.new do |c|
+	c.group do |g|
+		g.name = 'known pathogenic SNPs'
+		g.predicate = Proc.new do |snp|
+			snp.clinical_significance == 'pathogenic'
+		end
+	end
+	c.group do |g|
+		g.name = 'SNPs associated with genes'
+		g.predicate = Proc.new do |snp|
+			snp.genes != []
+		end
+	end
 	c.group do |g| 
-		g.name = 'blah'
+		g.name = 'everything else (clinical information unknown)'
 		g.predicate = Proc.new do |snp|
 			true
 		end
@@ -86,9 +103,19 @@ puts
 
 DbSNP.flush
 
+def make_dbsnp_link(rsid)
+	"http://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=#{rsid}"
+end
+
+# categorize all SNPs
+scope_snps.values.each do |snp|
+	GROUPS.categorize(snp).snps << snp
+end
+
 f = File.open('report.html', 'w') do |f|
 	html = Slim::Template.new('report.slim').
 		render(nil, 
+			   :groups => GROUPS,
 			   :snp_calls => scope_snp_calls,
 			   :snps => scope_snps,
 			   :summary => summary)

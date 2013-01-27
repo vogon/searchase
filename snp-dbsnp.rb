@@ -27,4 +27,28 @@ class SNP
 
 		snp
 	end
+
+	private
+	def create_allele?(seq)
+		allele = self.alleles[seq]
+
+		if !allele then
+			allele = Allele.new(seq)
+			self.alleles[seq] = allele
+		end
+
+		allele
+	end
+
+	private
+	def self.load_maploc(snp, xml)
+		xml.css("FxnSet").each do |fxnset|
+			load_fxnset(snp, fxnset)
+		end
+	end
+
+	private
+	def self.load_fxnset(snp, xml)
+		
+	end
 end
