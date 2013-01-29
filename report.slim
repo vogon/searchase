@@ -27,6 +27,6 @@ html
 					td.id 
 						a href="#{make_dbsnp_link(snp.rsid)}" = snp.rsid
 					td.genotype = snp_calls[snp.rsid].call
-					td.observed &mdash;
+					td.observed = snps[snp.rsid].alleles.keys.join("/")
 					td.significance = snps[snp.rsid].clinical_significance
 					td.genes = snps[snp.rsid].genes.join(", ")

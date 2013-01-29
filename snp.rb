@@ -20,6 +20,7 @@ end
 class Allele
 	def initialize(sequence)
 		self.sequence = sequence
+		self.mappings = []
 		yield self if block_given?
 	end
 
