@@ -107,6 +107,26 @@ def make_dbsnp_link(rsid)
 	"http://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=#{rsid}"
 end
 
+def gene_string_for_snp(snp)
+	genes = {}
+
+	snp.alleles.values.each do |allele|
+		allele.mappings.each do |mapping|
+			gene = mapping.gene
+
+			genes[gene] = {} if !genes[gene]
+		end
+	end
+
+	str = ""
+
+	genes.keys.each do |gene|
+		str << "#{gene.symbol} (#{gene.coding_strand}), "
+	end
+
+	str
+end
+
 # categorize all SNPs
 scope_snps.values.each do |snp|
 	GROUPS.categorize(snp).snps << snp

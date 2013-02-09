@@ -1,6 +1,9 @@
 # local cache of dbSNP records
 dbsnp_cache/*
 
+# local cache of entrezgene records
+entrezgene_cache/*
+
 #################
 ## Eclipse
 #################

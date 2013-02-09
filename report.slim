@@ -19,6 +19,7 @@ html
 				th id
 				th genotype
 				th observed seq.
+				th gene strand
 				th clinical signif.
 				th genes
 	
@@ -28,5 +29,6 @@ html
 						a href="#{make_dbsnp_link(snp.rsid)}" = snp.rsid
 					td.genotype = snp_calls[snp.rsid].call
 					td.observed = snps[snp.rsid].alleles.keys.join("/")
+					td.strand = gene_string_for_snp(snps[snp.rsid])
 					td.significance = snps[snp.rsid].clinical_significance
 					td.genes = snps[snp.rsid].genes.join(", ")

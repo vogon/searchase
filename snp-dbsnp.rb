@@ -2,28 +2,29 @@ require 'set'
 
 require './dbsnp'
 require './snp'
+require './gene'
 
 class SNP
 	attr_accessor :dbsnp_xml
 
 	def self.load_dbSNP(rsid)
 		# puts "loading #{rsid}"
-		xml = DbSNP[rsid]
-
+		snp_xml = DbSNP[rsid]
 		snp = SNP.new(rsid)
-		snp.chr = xml.css("Rs Component")[0]["chromosome"]
 
-		if xml.css("ClinicalSignificance").count > 0 then
-			snp.clinical_significance = xml.css("ClinicalSignificance")[0].text
+		snp.chr = snp_xml.css("Rs Component")[0]["chromosome"]
+
+		if snp_xml.css("ClinicalSignificance").count > 0 then
+			snp.clinical_significance = snp_xml.css("ClinicalSignificance")[0].text
 		end
 
-		xml.css("MapLoc").each do |maploc|
-			load_maploc(snp, xml)
+		snp_xml.css("MapLoc").each do |maploc|
+			load_maploc(snp, snp_xml)
 		end
 
 		genes = Set.new
 
-		xml.css("FxnSet").each do |fxnset|
+		snp_xml.css("FxnSet").each do |fxnset|
 			genes << fxnset[:symbol] if fxnset[:symbol]
 		end
 
@@ -60,8 +61,7 @@ class SNP
 		end
 
 		mapping = Mapping.new
-		mapping.gene_id = xml["geneId"]
-		mapping.symbol = xml["symbol"]
+		mapping.gene = Gene[xml["geneId"]]
 		mapping.function_class = xml["fxnClass"]
 		mapping.so_term = xml["soTerm"]
 
