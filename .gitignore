@@ -4,6 +4,9 @@ dbsnp_cache/*
 # local cache of entrezgene records
 entrezgene_cache/*
 
+# 23andme call files
+genome*.txt*
+
 #################
 ## Eclipse
 #################
