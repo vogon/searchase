@@ -54,7 +54,7 @@ GROUPS = GroupChain.new do |c|
 	c.group do |g|
 		g.name = 'SNPs associated with genes'
 		g.predicate = Proc.new do |snp|
-			snp.genes != []
+			snp.mappings != {}
 		end
 	end
 	c.group do |g| 
@@ -110,11 +110,12 @@ end
 def gene_string_for_snp(snp)
 	genes = {}
 
-	snp.alleles.values.each do |allele|
-		allele.mappings.each do |mapping|
-			gene = mapping.gene
+	snp.mappings.values.each do |mapping|
+		gene = mapping.gene
+		genes[gene] = {}
 
-			genes[gene] = {} if !genes[gene]
+		mapping.alleles.values.each do |allele|
+			genes[gene][allele.sequence] = allele.function_class
 		end
 	end
 

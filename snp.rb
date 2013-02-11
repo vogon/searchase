@@ -9,7 +9,7 @@ class SNP
 		self.rsid = rsid
 		@@snps[rsid] = self
 
-		self.alleles = {}
+		self.mappings = {}
 
 		yield self if block_given?
 	end
@@ -27,28 +27,28 @@ class SNP
 
 	attr_accessor :clinical_significance
 
-	attr_accessor :genes
-	attr_accessor :alleles
+	attr_accessor :mappings
 end
 
 class Allele
 	def initialize(sequence)
 		self.sequence = sequence
-		self.mappings = []
 		yield self if block_given?
 	end
 
 	attr_accessor :sequence
-	attr_accessor :mappings
+
+	attr_accessor :function_class
+	attr_accessor :so_term
 end
 
 class Mapping
-	def initialize
+	def initialize(gene)
+		self.gene = gene
+		self.alleles = {}
 		yield self if block_given?
 	end
 
 	attr_accessor :gene
-
-	attr_accessor :function_class
-	attr_accessor :so_term
+	attr_accessor :alleles
 end

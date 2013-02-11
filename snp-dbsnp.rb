@@ -22,23 +22,27 @@ class SNP
 			load_maploc(snp, snp_xml)
 		end
 
-		genes = Set.new
-
-		snp_xml.css("FxnSet").each do |fxnset|
-			genes << fxnset[:symbol] if fxnset[:symbol]
-		end
-
-		snp.genes = genes.to_a
-
 		snp
 	end
 	
-	def create_allele?(seq)
-		allele = self.alleles[seq]
+	def create_mapping?(gene_id)
+		gene = Gene[gene_id]
+		mapping = self.mappings[gene]
+
+		if !mapping then
+			mapping = Mapping.new(gene)
+			self.mappings[gene] = mapping
+		end
+
+		mapping
+	end
+
+	def self.create_allele?(mapping, seq)
+		allele = mapping.alleles[seq]
 
 		if !allele then
 			allele = Allele.new(seq)
-			self.alleles[seq] = allele
+			mapping.alleles[seq] = allele
 		end
 
 		allele
@@ -53,20 +57,19 @@ class SNP
 
 	private
 	def self.load_fxnset(snp, xml)
+		# get the relevant mapping
+		mapping = snp.create_mapping?(xml["geneId"])
+
 		# get the relevant alleles (all alleles if not specified)
 		if xml["allele"] then
-			alleles = [snp.create_allele?(xml["allele"])]
+			alleles = [create_allele?(mapping, xml["allele"])]
 		else
-			alleles = snp.alleles.values
+			alleles = mapping.alleles.values
 		end
 
-		mapping = Mapping.new
-		mapping.gene = Gene[xml["geneId"]]
-		mapping.function_class = xml["fxnClass"]
-		mapping.so_term = xml["soTerm"]
-
 		alleles.each do |allele|
-			allele.mappings << mapping
+			allele.function_class = xml["fxnClass"]
+			allele.so_term = xml["soTerm"]
 		end
 	end
 end
