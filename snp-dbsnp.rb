@@ -18,6 +18,15 @@ class SNP
 			snp.clinical_significance = snp_xml.css("ClinicalSignificance")[0].text
 		end
 
+		snp.observed = snp_xml.css("Rs > Sequence Observed")[0].text
+		snp.primary_seq = snp_xml.css("PrimarySequence").length > 0
+
+		# figure out exemplar orientation
+		exemplar = snp_xml.css("Rs > Sequence")[0]["exemplarSs"]
+		exemplar_ss = snp_xml.css("Ss[ssId=\"#{exemplar}\"]")[0]
+		snp.exemplar_orientation = exemplar_ss["orient"]
+		snp.exemplar_strand = exemplar_ss["strand"]
+
 		snp_xml.css("MapLoc").each do |maploc|
 			load_maploc(snp, snp_xml)
 		end

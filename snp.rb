@@ -27,6 +27,11 @@ class SNP
 
 	attr_accessor :clinical_significance
 
+	attr_accessor :observed
+	attr_accessor :primary_seq
+	attr_accessor :exemplar_orientation
+	attr_accessor :exemplar_strand
+
 	attr_accessor :mappings
 end
 

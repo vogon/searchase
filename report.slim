@@ -17,6 +17,9 @@ html
 		table
 			thead
 				th id
+				th observed
+				th ex. orient
+				th ex. strand
 				th genotype
 				th genes
 				th clinical signif.
@@ -25,6 +28,9 @@ html
 				tr
 					td.id 
 						a href="#{make_dbsnp_link(snp.rsid)}" = snp.rsid
+					td.observed = snps[snp.rsid].observed
+					td.exemplar-orientation = snps[snp.rsid].exemplar_orientation
+					td.exemplar-strand = snps[snp.rsid].exemplar_strand
 					td.genotype = snp_calls[snp.rsid].call
 					td.strand = gene_string_for_snp(snps[snp.rsid])
 					td.significance = snps[snp.rsid].clinical_significance
