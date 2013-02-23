@@ -1,0 +1,73 @@
+//--------------------------------------
+//--- 010 Editor v4.0.3 Binary Template
+//
+// File: Illumina bpm file
+// Revision: 1.0
+// Purpose: being rad
+//--------------------------------------
+
+struct BPM_LSTRING {
+    ubyte len;
+    char s[len];
+};
+
+struct BPM_TABLE_THING {
+    uint32 index[n_snps];
+
+    struct {
+        BPM_LSTRING snp_id[n_snps] <optimize=false>;
+    } ids;
+
+    ubyte unknown_012[n_snps];
+};
+
+struct BPM_SNP_DATA {
+    uint32 seven;
+    BPM_LSTRING ilmnID;
+    BPM_LSTRING name;
+    
+    ubyte unknown0[3];
+    
+    ushort index;
+    
+    ubyte unknown1[3];
+    
+    BPM_LSTRING ilmnStrand;
+    BPM_LSTRING snp;
+    BPM_LSTRING chr;
+    BPM_LSTRING ploidy;
+    BPM_LSTRING species;
+    BPM_LSTRING mapInfo;
+    
+    ubyte unknown2;
+
+    BPM_LSTRING sourceStrand0;
+    uint32 addressA_ID;
+    
+    ubyte unknown3[6];
+
+    BPM_LSTRING genomeBuild;
+    BPM_LSTRING source;
+    BPM_LSTRING sourceVersion;
+    BPM_LSTRING sourceStrand1;
+    
+    ubyte unknown4[5];
+    ubyte unknown5[16];
+};
+
+struct BPM_FILE {
+    char magic[3];
+    char unknown0[5];
+
+    BPM_LSTRING filename;
+
+    char unknown1[0x6c6];
+
+    uint32 n_snps;
+
+    BPM_TABLE_THING table_thing;
+    
+    struct {
+        BPM_SNP_DATA snp_data[n_snps] <optimize=false>;
+    } snps;
+} file;
