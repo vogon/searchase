@@ -13,16 +13,6 @@ require './snp-dbsnp'
 
 # Assay contains information about a measurement taken at a locus
 
-# SNP
-# => has-a snp id (rsid or illumina)
-# => has-a chromosome
-# => has-a clinical significance
-#
-# => has-many alleles
-# => has-many assays
-
-SNPs = {}
-
 class SNP
 	def initialize(id)
 		self.id = id
@@ -42,11 +32,6 @@ class SNP
 	attr_accessor :assays
 end
 
-# Allele
-# => has-a sequence
-#
-# => has-many mappings
-
 class Allele
 	def initialize(sequence)
 		self.sequence = sequence
@@ -61,12 +46,6 @@ class Allele
 	attr_accessor :mappings
 end
 
-# Mapping
-# => has-a symbol
-# => has-a entrezgene id
-# => has-a function class
-# => has-a so-term
-
 class Mapping
 	def initialize(id)
 		self.entrezgene_id = id
@@ -80,10 +59,6 @@ class Mapping
 	attr_accessor :function_class
 	attr_accessor :so_term
 end
-
-# Assay
-# => has-a sample id
-# => has-a genotype
 
 class Assay
 	def initialize(sample_id)
