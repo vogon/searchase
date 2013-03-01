@@ -31,10 +31,10 @@ CONFIG = {
 			"rs28940894"
 		],
 	:in_scope? => 
-		->(snpcall) do
-			snpcall.chr == "22" &&
-			# snpcall.id.rsid? &&
-			CONFIG[:rsid_list].any? { |rsid| rsid == snpcall.id } &&
-			snpcall.call.called?
+		->(snp) do
+			snp.chr == "22" &&
+			snp.id.rsid? &&
+			# CONFIG[:rsid_list].any? { |rsid| rsid == snp.id } &&
+			snp.assays.count > 0
 		end
 }

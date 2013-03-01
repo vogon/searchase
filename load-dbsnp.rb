@@ -1,5 +1,6 @@
 require './snp'
 require './dbsnp'
+require './gene'
 
 # loader for dbSNP data
 class SNP
@@ -18,25 +19,58 @@ class SNP
 			# build alleles
 			observed = snp_xml.css("Rs > Sequence Observed")[0].text
 
-			parse_nt_set(observed).each do |seq|
+			parse_nt_set(id, observed).each do |seq|
 				snp.alleles[seq] = Allele.new(seq)
 			end
 
-			snp_xml.css("MapLoc").each do |maploc|
-				load_maploc(snp, snp_xml)
+			# # figure out which strand the <Sequence> sequence is on
+			# exemplar_ssid = snp_xml.css("Rs Sequence")[0]["exemplarSs"]
+			# exemplar_ss = snp_xml.css("Ss[ssId=\"#{exemplar_ssid}\"]")[0]
+
+			# exemplar_seq = exemplar_ss.css("Observed")[0].text
+			# exemplar_set = parse_nt_set(exemplar_seq)
+
+			# # make sure the exemplar seq matches up -- if any exemplar
+			# # seq isn't attested in the rs observed seq, bomb out
+			# fail if exemplar_set.any? { |nt| !observed.index(nt) }
+
+			# snp.strand = exemplar_ss["strand"]
+
+			snp_xml.css("Component").each do |component|
+				component_orient = component["orientation"]
+				component_rev = (component_orient == "rev")
+
+				component.css("MapLoc").each do |maploc|
+					load_maploc(snp, maploc, component_rev)
+				end
 			end
 		end
 	end
 
 	private
-	def self.load_maploc(snp, xml)
-		xml.css("FxnSet").each do |fxnset|
-			load_fxnset(snp, fxnset)
+	def self.complement(nt)
+		case nt
+		when "A" then "T"
+		when "C" then "G"
+		when "G" then "C"
+		when "T" then "A"
 		end
 	end
 
 	private
-	def self.load_fxnset(snp, xml)
+	def self.load_maploc(snp, xml, component_rev)
+		orient = xml["orient"]
+		maploc_rev = (orient == "reverse")
+
+		xml.css("FxnSet").each do |fxnset|
+			load_fxnset(snp, fxnset, component_rev, maploc_rev)
+		end
+	end
+
+	private
+	def self.load_fxnset(snp, xml, component_rev, maploc_rev)
+		# puts snp, xml, component_rev, maploc_rev
+
 		# build a mapping
 		gene_id = xml["geneId"].to_i
 		mapping = Mapping.new(gene_id) do |mapping|
@@ -49,9 +83,34 @@ class SNP
 		# specified)
 		allele = xml["allele"]
 
+		if component_rev then
+			allele = complement(allele)
+		end
+
+		if maploc_rev then
+			allele = complement(allele)
+		end
+
+		# fxnset allele is on the associated gene's coding strand,
+		# not the + strand or the strand of the config; pull in data
+		# from entrezgene and figure out whether to complement or not
+		gene = Gene[gene_id]
+
+		if gene.coding_strand == "minus" then
+			allele = complement(allele)
+		end
+
+		# if snp.strand == "bottom" then
+		# 	allele = complement(allele)
+		# end
+
 		if allele then
 			matching_allele = snp.alleles[allele]
-			fail if !matching_allele
+
+			if !matching_allele then
+				warn "bizarre allele #{allele} found for #{snp.id}"
+				return
+			end
 
 			alleles = [matching_allele]
 		else
@@ -65,16 +124,18 @@ class SNP
 
 	# parse a set of nucleotides into individual alleles
 	private
-	def self.parse_nt_set(set)
+	def self.parse_nt_set(id, set)
 		nts = set.split('/')
 
 		# check to make sure that they're all things I expect
 		nts.each do |nt|
-			fail if !"ATCG".index(nt)
+			fail "#{id}, #{set}" if !"ATCG".index(nt)
 		end
 
 		nts
 	end
 end
 
-puts SNP.load_dbSNP("rs5907").inspect
+if __FILE__ == $0 then
+	puts SNP.load_dbSNP("rs5907").inspect
+end

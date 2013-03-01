@@ -1,10 +1,9 @@
 require 'tilt'
 require 'slim'
 
-require './snpcall'
-require './snpcall-23andme'
 require './snp'
-require './snp-dbsnp'
+require './load-23andme'
+require './load-dbsnp'
 
 class Group
 	def initialize(name = nil, predicate = nil)
@@ -54,7 +53,7 @@ GROUPS = GroupChain.new do |c|
 	c.group do |g|
 		g.name = 'SNPs associated with genes'
 		g.predicate = Proc.new do |snp|
-			snp.mappings != {}
+			snp.alleles.values.any? { |allele| allele.mappings != {} }
 		end
 	end
 	c.group do |g| 
@@ -81,20 +80,24 @@ ARGV.length >= 1 or fail "specify a SNP dump file"
 
 summary = {}
 
-snp_calls = SNPCall.load_23andme_dump(ARGV[0])
-summary[:total_count] = snp_calls.count
+snps = SNP.load_23andme_dump(ARGV[0])
+summary[:total_count] = snps.count
 
-scope_snp_calls = snp_calls.select { |id, snp| CONFIG[:in_scope?].(snp) }
-summary[:scope_count] = scope_snp_calls.count
+scope_snps = snps.select { |id, snp| CONFIG[:in_scope?].(snp) }
+summary[:scope_count] = scope_snps.count
 
-scope_snps = {}
+merged_scope_snps = {}
 
 i = 0
 
-scope_snp_calls.keys.each do |rsid|
+scope_snps.keys.each do |id|
 	print "#{i}..." if i % 100 == 0
 
-	scope_snps[rsid] = SNP.load_dbSNP(rsid)
+	# puts id
+	dbsnp = SNP.load_dbSNP(id)
+	merged_scope_snps[id] = scope_snps[id].merge(dbsnp)
+
+	# puts scope_snps[id].inspect, dbsnp.inspect, merged_scope_snps[id].inspect
 
 	i = i + 1
 end
@@ -108,28 +111,21 @@ def make_dbsnp_link(rsid)
 end
 
 def gene_string_for_snp(snp)
-	genes = {}
+	allele_strs = 
+		snp.alleles.values.map do |allele|
+			mapping_strs = 
+				allele.mappings.values.map do |mapping|
+					"#{mapping.symbol} #{mapping.function_class}"
+				end
 
-	snp.mappings.values.each do |mapping|
-		gene = mapping.gene
-		genes[gene] = {}
-
-		mapping.alleles.values.each do |allele|
-			genes[gene][allele.sequence] = allele.function_class
+			"#{allele.sequence} (#{mapping_strs.join('; ')})"
 		end
-	end
 
-	str = ""
-
-	genes.keys.each do |gene|
-		str << "#{gene.symbol} (#{gene.coding_strand}), "
-	end
-
-	str
+	allele_strs.join(", ")
 end
 
 # categorize all SNPs
-scope_snps.values.each do |snp|
+merged_scope_snps.values.each do |snp|
 	GROUPS.categorize(snp).snps << snp
 end
 
@@ -137,8 +133,7 @@ f = File.open('report.html', 'w') do |f|
 	html = Slim::Template.new('report.slim').
 		render(nil, 
 			   :groups => GROUPS,
-			   :snp_calls => scope_snp_calls,
-			   :snps => scope_snps,
+			   :snps => merged_scope_snps,
 			   :summary => summary)
 
 	f.write html
