@@ -66,9 +66,14 @@ module DbSNP
 
 	public
 	def self.[](rsid)
-		# remove leading "rs", if any
-		if rsid =~ /^rs([0-9]+)/ then
+		if rsid.is_a? Integer then
+			# assume rsid
+		elsif rsid =~ /^rs([0-9]+)/ then
+			# definitely rsid
 			rsid = $1
+		else
+			# not an rsid
+			return nil
 		end
 
 		begin
