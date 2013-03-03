@@ -80,6 +80,8 @@ ARGV.length >= 1 or fail "specify a SNP dump file"
 
 summary = {}
 
+n_snps = ARGV[1].to_i if ARGV[1]
+
 snps = SNP.load_23andme_dump(ARGV[0])
 summary[:total_count] = snps.count
 
@@ -100,6 +102,8 @@ scope_snps.keys.each do |id|
 	# puts scope_snps[id].inspect, dbsnp.inspect, merged_scope_snps[id].inspect
 
 	i = i + 1
+
+	break if i >= n_snps
 end
 
 puts

@@ -1,0 +1,10 @@
+- based on a set of 22 SNPs, it appears that the Rs-level Sequence always has an implicit "forward" orient
+
+- ss65788048 and ss66818521 on rs759235: both are orient="forward" with different strand; both report the same observed and flanking sequence
+  => strand="top"/strand="bottom" do not have complemented sequences to one another if the orient is the same
+
+- rs5907: the maploc on NT_011520.12 contains fxnsets for genes on both strands (SERPIND1 +, PI4KA -) and fxnsets have no maploc-relative orient
+  => fxnsets contain no useful information for orienting "forward"
+
+- rs5907 is on contig NW_001838740.2 on assembly AC_000154.1.  NW_0018... is complemented in AC_000154 and the read (ABBA01015445.1) is not complemented in NW_0018...; the <Component> is orientation="rev" and the <MapLoc> is orient="reverse".  the sequence in ABBA... at 335671bp into NW_0018... is C and the reference allele at this SNP is G.
+  => guess: the orientation of the <Component> is the same as the orientation of the contig with respect to the assembly; the orientation of the <MapLoc> is the orientation of the SNP sequence with respect to the assembly
