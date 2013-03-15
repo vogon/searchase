@@ -19,6 +19,7 @@ html
 				th id
 				th observed
 				th genotype
+				th orient
 				th genes
 				th clinical signif.
 	
@@ -28,5 +29,6 @@ html
 						a href="#{make_dbsnp_link(snp.id)}" target="_blank" = snp.id
 					td.observed = snp.alleles.keys.join(",")
 					td.genotype = snp.assays.values[0].genotype
+					td.orient = snp.orient
 					td.genes = gene_string_for_snp(snp)
 					td.significance = snp.clinical_significance

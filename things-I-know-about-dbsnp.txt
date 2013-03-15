@@ -8,3 +8,5 @@
 
 - rs5907 is on contig NW_001838740.2 on assembly AC_000154.1.  NW_0018... is complemented in AC_000154 and the read (ABBA01015445.1) is not complemented in NW_0018...; the <Component> is orientation="rev" and the <MapLoc> is orient="reverse".  the sequence in ABBA... at 335671bp into NW_0018... is C and the reference allele at this SNP is G.
   => guess: the orientation of the <Component> is the same as the orientation of the contig with respect to the assembly; the orientation of the <MapLoc> is the orientation of the SNP sequence with respect to the assembly
+
+- rs5748633 is kind of busted I think idk

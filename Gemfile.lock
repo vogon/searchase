@@ -2,19 +2,12 @@ GEM
   remote: http://rubygems.org/
   specs:
     bio (1.4.3)
-    nokogiri (1.5.5)
     nokogiri (1.5.5-x86-mingw32)
-    rack (1.4.1)
-    rack-protection (1.2.0)
-      rack
-    rubyzip (0.9.9)
-    sinatra (1.3.2)
-      rack (~> 1.3, >= 1.3.6)
-      rack-protection (~> 1.2)
-      tilt (~> 1.3, >= 1.3.3)
+    sequel (3.45.0)
     slim (1.3.4)
       temple (~> 0.5.5)
       tilt (~> 1.3.3)
+    sqlite3 (1.3.7-x86-mingw32)
     temple (0.5.5)
     tilt (1.3.3)
 
@@ -24,6 +17,6 @@ PLATFORMS
 DEPENDENCIES
   bio (~> 1.4.3)
   nokogiri (~> 1.5.0)
-  rubyzip
-  sinatra
+  sequel
   slim (~> 1.3.4)
+  sqlite3

@@ -103,7 +103,7 @@ scope_snps.keys.each do |id|
 
 	i = i + 1
 
-	break if i >= n_snps
+	break if n_snps && i >= n_snps
 end
 
 puts

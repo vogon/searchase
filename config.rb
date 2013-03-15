@@ -2,6 +2,7 @@ CONFIG = {
 	:ncbi_email => "vogon@icculus.org",
 	:dbsnp_cache_dir => "./dbsnp_cache",
 	:entrezgene_cache_dir => "./entrezgene_cache",
+	:entreznuc_cache_dir => "./entreznuc_cache",
 	# :dbsnp_cache_sqlite => "./dbsnp_cache.db",
 	:rsid_list =>
 		[ 

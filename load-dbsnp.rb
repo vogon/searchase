@@ -36,7 +36,7 @@ class SNP
 
 			# snp.strand = exemplar_ss["strand"]
 
-			snp_xml.css("Component").each do |component|
+			snp_xml.css('Assembly[reference="true"] Component[groupTerm]').each do |component|
 				component_orient = component["orientation"]
 				component_rev = (component_orient == "rev")
 
@@ -62,6 +62,9 @@ class SNP
 		orient = xml["orient"]
 		maploc_rev = (orient == "reverse")
 
+		# puts snp.orient
+		snp.orient = maploc_rev
+
 		xml.css("FxnSet").each do |fxnset|
 			load_fxnset(snp, fxnset, component_rev, maploc_rev)
 		end
@@ -83,22 +86,15 @@ class SNP
 		# specified)
 		allele = xml["allele"]
 
-		if component_rev then
-			allele = complement(allele)
-		end
+		# if you ask nuccore for the sequence of any read, it will return the
+		# sequence on the plus strand by default; 
+		# if component_rev then
+		# 	allele = complement(allele)
+		# end
 
-		if maploc_rev then
-			allele = complement(allele)
-		end
-
-		# fxnset allele is on the associated gene's coding strand,
-		# not the + strand or the strand of the config; pull in data
-		# from entrezgene and figure out whether to complement or not
-		gene = Gene[gene_id]
-
-		if gene.coding_strand == "minus" then
-			allele = complement(allele)
-		end
+		# if maploc_rev then
+		# 	allele = complement(allele)
+		# end
 
 		# if snp.strand == "bottom" then
 		# 	allele = complement(allele)
@@ -108,7 +104,7 @@ class SNP
 			matching_allele = snp.alleles[allele]
 
 			if !matching_allele then
-				warn "bizarre allele #{allele} found for #{snp.id}"
+				# warn "bizarre allele #{allele} found for #{snp.id}"
 				return
 			end
 

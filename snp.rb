@@ -18,14 +18,16 @@ class SNP
 		fail if self.clinical_significance && 
 				other.clinical_significance &&
 				self.clinical_significance != other.clinical_significance
-		fail if self.strand && other.strand &&
-				(self.strand != other.strand)
+		fail if self.orient && other.orient &&
+				(self.orient != other.orient)
 
 		new_snp = SNP.new(self.id)
 
 		new_snp.chr = (self.chr or other.chr)
 		new_snp.clinical_significance = (self.clinical_significance or 
 										other.clinical_significance)
+		new_snp.orient = (self.orient or other.orient)
+
 		new_snp.alleles = self.alleles.merge(other.alleles)
 		new_snp.assays = self.assays.merge(other.assays)
 
@@ -36,7 +38,7 @@ class SNP
 	
 	attr_accessor :chr
 	attr_accessor :clinical_significance
-	attr_accessor :strand
+	attr_accessor :orient
 
 	attr_accessor :alleles
 	attr_accessor :assays
