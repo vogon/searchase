@@ -10,3 +10,5 @@
   => guess: the orientation of the <Component> is the same as the orientation of the contig with respect to the assembly; the orientation of the <MapLoc> is the orientation of the SNP sequence with respect to the assembly
 
 - rs5748633 is kind of busted I think idk
+- rs59551486 is an MNV indel
+- rs362204 is an SNV indel

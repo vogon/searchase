@@ -65,6 +65,12 @@ GROUPS = GroupChain.new do |c|
 end
 
 class String
+	def complement
+		fail if !(self =~ /^[ATCG]+$/)
+
+		self.tr('ATCG', 'TAGC')
+	end
+
 	def rsid?
 		self =~ /^rs/
 	end
@@ -114,7 +120,7 @@ def make_dbsnp_link(rsid)
 	"http://www.ncbi.nlm.nih.gov/projects/SNP/snp_ref.cgi?rs=#{rsid}"
 end
 
-def gene_string_for_snp(snp)
+def allele_strings_for_snp(snp)
 	allele_strs = 
 		snp.alleles.values.map do |allele|
 			mapping_strs = 
@@ -125,7 +131,40 @@ def gene_string_for_snp(snp)
 			"#{allele.sequence} (#{mapping_strs.join('; ')})"
 		end
 
-	allele_strs.join(", ")
+	allele_strs
+end
+
+def assay_to_alleles(snp, assay_id)
+	# look up assay
+	assay = snp.assays[assay_id]
+	nil if !assay
+
+	# puts assay.inspect
+
+	# separate assay into individual calls
+	assay.genotype.chars.map do |call|
+		# puts call
+
+		# convert call to allele
+		case call
+		when /[ATCG]/
+			plus_call = snp.orient ? call.complement : call
+
+			snp.alleles[plus_call]
+		when /I/
+			# indel insertion
+			# make sure there's a deletion allele
+			nil if !snp.alleles["-"]
+			# if > 2 alleles, actual allele is ambiguous
+			nil if snp.alleles.count > 2
+
+			# grab the allele that's not the deletion allele
+			snp.alleles.find { |k, v| k != "-" }[1]
+		when /D/
+			# indel deletion
+			snp.alleles["-"]
+		end
+	end
 end
 
 # categorize all SNPs
@@ -138,7 +177,8 @@ f = File.open('report.html', 'w') do |f|
 		render(nil, 
 			   :groups => GROUPS,
 			   :snps => merged_scope_snps,
-			   :summary => summary)
+			   :summary => summary,
+			   :assay_id => ARGV[0])
 
 	f.write html
 end

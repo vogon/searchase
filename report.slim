@@ -18,9 +18,10 @@ html
 			thead
 				th id
 				th observed
-				th genotype
+				th assay
 				th orient
-				th genes
+				th alleles
+				th genotype
 				th clinical signif.
 	
 			- group.snps.each do |snp|
@@ -28,7 +29,11 @@ html
 					td.id 
 						a href="#{make_dbsnp_link(snp.id)}" target="_blank" = snp.id
 					td.observed = snp.alleles.keys.join(",")
-					td.genotype = snp.assays.values[0].genotype
+					td.assay = snp.assays[assay_id].genotype
 					td.orient = snp.orient
-					td.genes = gene_string_for_snp(snp)
+					td.alleles
+						- allele_strings_for_snp(snp).each do |allele|
+							= allele
+							br
+					td.genotype = assay_to_alleles(snp, assay_id).map {|allele| allele.sequence if allele != nil}.join(",")
 					td.significance = snp.clinical_significance
