@@ -125,7 +125,7 @@ class SNP
 
 		# check to make sure that they're all things I expect
 		nts.each do |nt|
-			fail "#{id}, #{set}" if !"ATCG".index(nt)
+			fail "#{id}, #{set}" if !(nt =~ /[ATCG]+|-/)
 		end
 
 		nts
