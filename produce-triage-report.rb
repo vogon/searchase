@@ -148,10 +148,12 @@ def assay_to_alleles(snp, assay_id)
 		# convert call to allele
 		case call
 		when /[ATCG]/
-			plus_call = snp.orient ? call.complement : call
+			# standard snp
+			# reorient call to other strand if snp's snp-to-chr orientation is reversed
+			oriented_call = snp.orient ? call.complement : call
 
-			snp.alleles[plus_call]
-		when /I/
+			snp.alleles[oriented_call]
+		when 'I'
 			# indel insertion
 			# make sure there's a deletion allele
 			nil if !snp.alleles["-"]
@@ -160,7 +162,7 @@ def assay_to_alleles(snp, assay_id)
 
 			# grab the allele that's not the deletion allele
 			snp.alleles.find { |k, v| k != "-" }[1]
-		when /D/
+		when 'D'
 			# indel deletion
 			snp.alleles["-"]
 		end
