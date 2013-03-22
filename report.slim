@@ -11,29 +11,31 @@ html
 			th scope="row" ... in scope:
 			td = summary[:scope_count]
 
-	- groups.each do |group|
-		h1 = group.name
+	table
+		thead
+			th id
+			th score
+			th observed
+			th assay
+			th orient
+			th alleles
+			th genotype
+			th clinical signif.
 
-		table
-			thead
-				th id
-				th observed
-				th assay
-				th orient
-				th alleles
-				th genotype
-				th clinical signif.
-	
-			- group.snps.each do |snp|
-				tr
-					td.id 
-						a href="#{make_dbsnp_link(snp.id)}" target="_blank" = snp.id
-					td.observed = snp.alleles.keys.join(",")
-					td.assay = snp.assays[assay_id].genotype
-					td.orient = snp.orient
-					td.alleles
-						- allele_strings_for_snp(snp).each do |allele|
-							= allele
-							br
-					td.genotype = assay_to_alleles(snp, assay_id).map {|allele| allele.sequence if allele != nil}.join(",")
-					td.significance = snp.clinical_significance
+		- scored_snps.each do |scored_snp|
+			- snp = scored_snp[:snp]
+			- score = scored_snp[:score]
+
+			tr
+				td.id 
+					a href="#{make_dbsnp_link(snp.id)}" target="_blank" = snp.id
+				td.score = score
+				td.observed = snp.alleles.keys.join(",")
+				td.assay = snp.assays[assay_id].genotype
+				td.orient = snp.orient
+				td.alleles
+					- allele_strings_for_snp(snp).each do |allele|
+						= allele
+						br
+				td.genotype = assay_to_alleles(snp, assay_id).map {|allele| allele.sequence if allele != nil}.join(",")
+				td.significance = snp.clinical_significance

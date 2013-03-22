@@ -5,64 +5,50 @@ require './snp'
 require './load-23andme'
 require './load-dbsnp'
 
-class Group
-	def initialize(name = nil, predicate = nil)
+class Rule
+	private
+	DEFAULT_MATCHER = Proc.new { |snp, assay| true }
+	DEFAULT_SCORER = Proc.new { |snp, assay, prev_score| prev_score }
+
+	public
+	def initialize(name)
 		self.name = name
-		self.predicate = predicate
-		self.snps = []
+		self.match_fn = DEFAULT_MATCHER
+		self.score_fn = DEFAULT_SCORER
 
-		if block_given? then
-			yield self
-		end
-
-		fail if (self.name.nil? || self.predicate.nil?)
+		yield self if block_given?
 	end
 
-	attr_accessor :name, :predicate, :snps
+	def score_assay(snp, assay, prev_score)
+		if self.match_fn.(snp, assay) then
+			self.score_fn.(snp, assay, prev_score)
+		else
+			prev_score
+		end
+	end
+
+	attr_accessor :name
+	attr_accessor :match_fn, :score_fn
 end
 
-class GroupChain
-	def initialize
-		@chain = []
+RULES =
+	[
+		Rule.new("SNP is known to be pathogenic") do |rule|
+			rule.match_fn = Proc.new do |snp|
+				snp.clinical_significance == 'pathogenic'
+			end
 
-		yield self
-	end
+			rule.score_fn = Proc.new { |snp, assay, prev_score| prev_score + 10 }
+		end,
 
-	def each(&block)
-		@chain.each &block
-	end
+		Rule.new("SNP has an allele associated with a gene") do |rule|
+			rule.match_fn = Proc.new do |snp|
+				snp.alleles.values.any? { |allele| allele.mappings != {} }	
+			end
 
-	def group(&new_block)
-		@chain << Group.new(&new_block)
-	end
-
-	def categorize(snp)
-		@chain.each do |group|
-			return group if group.predicate.call(snp)
+			rule.score_fn = Proc.new { |snp, assay, prev_score| prev_score + 5 }
 		end
-	end
-end
-
-GROUPS = GroupChain.new do |c|
-	c.group do |g|
-		g.name = 'known pathogenic SNPs'
-		g.predicate = Proc.new do |snp|
-			snp.clinical_significance == 'pathogenic'
-		end
-	end
-	c.group do |g|
-		g.name = 'SNPs associated with genes'
-		g.predicate = Proc.new do |snp|
-			snp.alleles.values.any? { |allele| allele.mappings != {} }
-		end
-	end
-	c.group do |g| 
-		g.name = 'everything else (clinical information unknown)'
-		g.predicate = Proc.new do |snp|
-			true
-		end
-	end
-end
+	]
 
 class String
 	def complement
@@ -148,10 +134,12 @@ def assay_to_alleles(snp, assay_id)
 		# convert call to allele
 		case call
 		when /[ATCG]/
-			plus_call = snp.orient ? call.complement : call
+			# standard snp
+			# reorient call to other strand if snp's snp-to-chr orientation is reversed
+			oriented_call = snp.orient ? call.complement : call
 
-			snp.alleles[plus_call]
-		when /I/
+			snp.alleles[oriented_call]
+		when 'I'
 			# indel insertion
 			# make sure there's a deletion allele
 			nil if !snp.alleles["-"]
@@ -160,23 +148,32 @@ def assay_to_alleles(snp, assay_id)
 
 			# grab the allele that's not the deletion allele
 			snp.alleles.find { |k, v| k != "-" }[1]
-		when /D/
+		when 'D'
 			# indel deletion
 			snp.alleles["-"]
 		end
 	end
 end
 
-# categorize all SNPs
-merged_scope_snps.values.each do |snp|
-	GROUPS.categorize(snp).snps << snp
+# score all SNPs
+scored_snps = merged_scope_snps.values.map do |snp|
+	assay = snp.assays[ARGV[0]]
+
+	score = RULES.reduce(0) do |memo, rule|
+		rule.score_assay(snp, assay, memo)
+	end
+
+	{ snp: snp, score: score }
+end
+
+scored_snps.sort! do |snp_a, snp_b|
+	snp_b[:score] <=> snp_a[:score]
 end
 
 f = File.open('report.html', 'w') do |f|
 	html = Slim::Template.new('report.slim').
 		render(nil, 
-			   :groups => GROUPS,
-			   :snps => merged_scope_snps,
+			   :scored_snps => scored_snps,
 			   :summary => summary,
 			   :assay_id => ARGV[0])
 
