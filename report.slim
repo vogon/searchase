@@ -37,5 +37,5 @@ html
 					- allele_strings_for_snp(snp).each do |allele|
 						= allele
 						br
-				td.genotype = assay_to_alleles(snp, assay_id).map {|allele| allele.sequence if allele != nil}.join(",")
+				td.genotype = assay_id_to_alleles(snp, assay_id).map {|allele| allele.sequence if allele != nil}.join(",")
 				td.significance = snp.clinical_significance

@@ -31,8 +31,42 @@ class Rule
 	attr_accessor :match_fn, :score_fn
 end
 
+def noisy_mutation?(mapping)
+	!!([
+		"missense",
+		"stop-gained",
+		"stop-lost",
+		"frameshift-variant",
+		"cds-indel"
+	].index(mapping.function_class))
+end
+
 RULES =
 	[
+		Rule.new("assay calls all non-reference alleles") do |rule|
+		end,
+
+		Rule.new("assay calls at least one noisy mutation") do |rule|
+			rule.match_fn = Proc.new do |snp, assay|
+				assay_alleles = assay_to_alleles(snp, assay)
+
+				assay_alleles.any? do |allele|
+					# puts allele.mappings.inspect
+					# bomb out early if no call
+					if !allele then
+						false
+						break
+					end
+
+					allele.mappings.values.any? do |mapping|
+						noisy_mutation?(mapping)
+					end
+				end
+			end
+
+			rule.score_fn = Proc.new { |snp, assay, prev_score| prev_score + 100 }
+		end,
+
 		Rule.new("SNP is known to be pathogenic") do |rule|
 			rule.match_fn = Proc.new do |snp|
 				snp.clinical_significance == 'pathogenic'
@@ -111,7 +145,7 @@ def allele_strings_for_snp(snp)
 		snp.alleles.values.map do |allele|
 			mapping_strs = 
 				allele.mappings.values.map do |mapping|
-					"#{mapping.symbol} #{mapping.function_class}"
+					"#{mapping.symbol} #{mapping.function_class} #{mapping.so_term}"
 				end
 
 			"#{allele.sequence} (#{mapping_strs.join('; ')})"
@@ -120,11 +154,7 @@ def allele_strings_for_snp(snp)
 	allele_strs
 end
 
-def assay_to_alleles(snp, assay_id)
-	# look up assay
-	assay = snp.assays[assay_id]
-	nil if !assay
-
+def assay_to_alleles(snp, assay)
 	# puts assay.inspect
 
 	# separate assay into individual calls
@@ -153,6 +183,13 @@ def assay_to_alleles(snp, assay_id)
 			snp.alleles["-"]
 		end
 	end
+end
+
+def assay_id_to_alleles(snp, assay_id)
+	assay = snp.assays[assay_id]
+	nil if !assay
+
+	assay_to_alleles(snp, assay)
 end
 
 # score all SNPs
